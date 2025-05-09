@@ -36,6 +36,10 @@ let userSchema = new Schema(
         message: "Password and Confirm Password do not match",
       },
     },
+    profilePic: {
+      type: String,
+      default: "https://res.cloudinary.com/dqj0v4x5g/image/upload/v1698231232/defaultProfilePic.png",
+    },
   },
   {
     timestamps: true, 
