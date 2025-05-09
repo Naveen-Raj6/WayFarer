@@ -1,6 +1,16 @@
 import itineraryService from "../services/itineraryService.js";
 
 class ItineraryController {
+    async geminiTravelPlan(req, res, next) {
+        try {
+            let travelPlan = await itineraryService.geminiTravelPlan(req);
+            res.status(200).json(travelPlan);
+        } catch (err) {
+            console.log("Error in geminiTravelPlan controller", err);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    }
+
 
     async travelPlan(req, res, next) {
         try {

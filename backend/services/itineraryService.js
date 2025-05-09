@@ -1,8 +1,18 @@
 import openAi from 'openai';
 import itineraryModel from '../models/itenary.model.js';
 import axios from 'axios';
+import { jsonrepair } from 'jsonrepair';
+import gemini1 from 'gemini-ai'
 
 class ItineraryService {
+
+    async geminiTravelPlan(req) {
+        const gemini = new gemini1(process.env.geminiAi)
+        const response = await gemini.ask("hello")
+        return response
+    }
+
+
 
     async travelPlan(req) {
         try {
@@ -47,14 +57,21 @@ class ItineraryService {
 
             let content = response.choices[0].message.content;
             console.log("OpenAI Response Content:", response.choices[0].message.content);
-            content = content.replace(/```json\s*|```/g, "").trim();
-            const match = content.match(/{[\s\S]*}/);
-            if (!match) {
-                throw new Error("Unable to parse JSON from the AI response.");
-            }
+            // content = content.replace(/```json\s*|```/g, "").trim();
+            // const match = content.match(/{[\s\S]*}/);
+            // if (!match) {
+            //     throw new Error("Unable to parse JSON from the AI response.");
+            // }
 
             // console.log("\n\n\n\n\n\nContent after replacing: ", content);
-            const jsonData = content ? JSON.parse(match[0]) : null;
+            // const jsonData = content ? JSON.parse(match[0]) : null;/
+
+            let jsonData;
+            try {
+                jsonData = JSON.parse(jsonrepair(content));
+            } catch (error) {
+                console.log("Error parsing JSON:", error);
+            }
             console.log("Parsed JSON Data:", jsonData);
             // console.log("\n\n\n\n\n\nParsed JSON data: ", jsonData);
 

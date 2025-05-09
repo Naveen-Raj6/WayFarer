@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "gemini-ai": "^2.2.1",
+    "jsonrepair": "^3.12.0"
+  }
+}
