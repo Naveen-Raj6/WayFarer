@@ -3,37 +3,23 @@ import useAuth from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children }) => {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const { token } = useAuth();
-  
-useEffect(() => {
-  if(token) {
-    console.log("Token found:", token);
-    
-    return setIsAuthenticated(true); 
-  }
-  setIsAuthenticated(false);
-  setIsLoading(false);
-},[]) 
+  const navigate = useNavigate();
 
-//   useEffect(() => {
-//     if (!isAuthenticated) {
-//       navigate("/login");
-//     }
-//   }, [isAuthenticated, navigate]);
+  useEffect(() => {
+    console.log(token);
 
+    // Check if token exists
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+  }, [token, navigate]);
 
+  // Only render children if token exists
+  return token ? children : null;
 
-//   if (isLoading) return <div>Loading...</div>;
-
-  return isAuthenticated ? (
-    children
-  ) : (
-    navigate("/")
-  );
-
+  return isAuthenticated ? children : navigate("/");
 };
 
 export default ProtectedRoute;

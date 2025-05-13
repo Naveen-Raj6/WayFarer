@@ -1,3 +1,4 @@
+import { updateUser } from "../controllers/user.controllers.js";
 import User from "../models/user.model.js";
 
 class UserService {
@@ -41,7 +42,21 @@ class UserService {
     }
     return users;
   }
+
+  async updateUser(id, req) {
+
+    let updateUser = await User.findByIdAndUpdate(id, { displayPicture: req.file.path }, { new: true });
+    if (!updateUser) {
+      let err = new Error("User not found");
+      err.statusCode = 404;
+      throw err;
+    }
+    return updateUser;
+  }
+
 }
+
+
 
 let userInstance = new UserService();
 

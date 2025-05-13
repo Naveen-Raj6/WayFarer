@@ -26,7 +26,7 @@ let userSchema = new Schema(
     },
     confirmPassword: {
       type: String,
-      select:false,
+      select: false,
       minLength: [6, "Min character length is 6"],
       required: [true, "Confirm password is a required field"],
       validate: {
@@ -36,25 +36,25 @@ let userSchema = new Schema(
         message: "Password and Confirm Password do not match",
       },
     },
-    profilePic: {
+    displayPicture: {
       type: String,
       default: "https://res.cloudinary.com/dqj0v4x5g/image/upload/v1698231232/defaultProfilePic.png",
     },
   },
   {
-    timestamps: true, 
+    timestamps: true,
   }
 );
 
 //pre middleware
-userSchema.pre("save", async function(next){
-    this.password=await bcrypt.hash(this.password, 10)
-    this.confirmPassword=undefined
-    next()
+userSchema.pre("save", async function (next) {
+  this.password = await bcrypt.hash(this.password, 10)
+  this.confirmPassword = undefined
+  next()
 })
 
-userSchema.methods.comparePassword=async function(pwd,pwdDB){
-      return await bcrypt.compare(pwd,pwdDB)
+userSchema.methods.comparePassword = async function (pwd, pwdDB) {
+  return await bcrypt.compare(pwd, pwdDB)
 }
 
 let User = model("User", userSchema);

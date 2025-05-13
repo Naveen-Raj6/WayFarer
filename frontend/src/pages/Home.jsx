@@ -44,7 +44,7 @@ const Home = () => {
 
   useEffect(() => {
     if (!token) {
-      return navigate("/login");
+      navigate("/login");
     }
   }, [token, navigate]);
 
@@ -82,7 +82,7 @@ const Home = () => {
     };
 
     fetchSuggestions();
-  }, [debouncedInput]);
+  }, [debouncedInput, token]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -96,7 +96,6 @@ const Home = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start loading
     try {
       const response = await axios.post("/itenaries", formData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -107,8 +106,6 @@ const Home = () => {
       alert("Itinerary created successfully!");
     } catch (error) {
       console.error("Error creating itinerary:", error);
-    } finally {
-      setLoading(false); // Stop loading
     }
   };
 

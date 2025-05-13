@@ -1,21 +1,30 @@
-
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from '../utils/axios';
-import Navbar from '../components/Navbar';
+import React, { use, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "../utils/axios";
+import Navbar from "../components/Navbar";
+import useAuth from "../context/AuthContext";
 
 const Signup = () => {
+  const { token } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    displayPicture: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const { username, email, password, confirmPassword } = formData;
+  useEffect(() => {
+    if (token) {
+      navigate("/home");
+    }
+  }, [token, navigate]);
+
+  const { username, email, password, confirmPassword, displayPicture } =
+    formData;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,9 +32,8 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
-    
     setLoading(true);
 
     try {
@@ -33,18 +41,24 @@ const Signup = () => {
         username,
         email,
         password,
-        confirmPassword
+        confirmPassword,
       };
-      
-      const response = await axios.post('/auth/register', dataToSend);
-      
+
+      const response = await axios.post("/auth/register", dataToSend);
+
       // Store the token in localStorage if provided in response
-      if (response.data.token) {
-        localStorage.setItem('userToken', response.data.token);
-      }
-      navigate('/home');
+      // if (response.data.token) {
+      //   localStorage.setItem("userToken", response.data.token);
+      //   localStorage.setItem("user", JSON.stringify(response.data.user));
+      // }
+
+      setToken(response.data.token);
+      setUser(response.data.user);
+      navigate("/home");
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(
+        err.response?.data?.message || "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -52,69 +66,73 @@ const Signup = () => {
 
   return (
     <div className="signup-container">
-      <Navbar/>
-    <div className="form-container">
-      <div className="form-wrapper">
-        <h2>Sign Up</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={username}
-              onChange={handleChange}
-              required
-              placeholder="Enter your username"
-            />
+      <Navbar />
+      <div className="form-container">
+        <div className="form-wrapper">
+          <h2>Sign Up</h2>
+          {error && <div className="error-message">{error}</div>}
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={username}
+                onChange={handleChange}
+                required
+                placeholder="Enter your username"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={email}
+                onChange={handleChange}
+                required
+                placeholder="Enter your email"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={handleChange}
+                required
+                placeholder="Confirm your password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading ? "Signing up..." : "Sign Up"}
+            </button>
+          </form>
+          <div className="form-footer">
+            Already have an account? <Link to="/login">Login</Link>
           </div>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={handleChange}
-              required
-              placeholder="Enter your email"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={handleChange}
-              required
-              placeholder="Enter your password"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={handleChange}
-              required
-              placeholder="Confirm your password"
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Signing up...' : 'Sign Up'}
-          </button>
-        </form>
-        <div className="form-footer">
-          Already have an account? <Link to="/login">Login</Link>
         </div>
       </div>
-    </div>
     </div>
   );
 };

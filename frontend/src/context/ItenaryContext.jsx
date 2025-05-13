@@ -1,4 +1,4 @@
-import { useContext, createContext, useEffect, useState, use } from "react";
+import { useContext, createContext, useEffect, useState } from "react";
 import useAuth from "./AuthContext";
 import axios from "../utils/axios";
 
@@ -21,11 +21,17 @@ export const ItineraryProvider = ({ children }) => {
       });
 
       // Replace the existing state with the fetched data
-      setItenaries(response.data);
+      setItenaries([...response.data]);
     } catch (error) {
       console.error("Error fetching itineraries:", error);
     }
   };
+
+  useEffect(() => {
+    if (token) {
+      fetchItinaries();
+    }
+  }, [token]);
 
   return (
     <ItineraryContext.Provider value={{ itenaries, setItenaries }}>

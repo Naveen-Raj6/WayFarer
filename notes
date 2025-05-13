@@ -49,32 +49,26 @@ class ItineraryService {
                 ],
             });
 
-            if (!response || !response.choices || !response.choices.length === 0) {
-                let err = new Error("No response from OpenAI");
-                err.statusCode = 500;
-                throw err;
+            if (!response || !response.choices || response.choices.length === 0) {
+                throw new Error("No response from OpenAI");
             }
 
             let content = response.choices[0].message.content;
-            console.log("OpenAI Response Content:", response.choices[0].message.content);
-            // content = content.replace(/```json\s*|```/g, "").trim();
-            // const match = content.match(/{[\s\S]*}/);
-            // if (!match) {
-            //     throw new Error("Unable to parse JSON from the AI response.");
-            // }
+            console.log("OpenAI Response Content:", content);
 
-            // console.log("\n\n\n\n\n\nContent after replacing: ", content);
-            // const jsonData = content ? JSON.parse(match[0]) : null;/
+            if (!content) {
+                throw new Error("Empty response content from OpenAI");
+            }
 
             let jsonData;
             try {
                 jsonData = JSON.parse(jsonrepair(content));
             } catch (error) {
-                console.log("Error parsing JSON:", error);
+                console.error("Error parsing JSON:", error);
                 throw new Error("Invalid JSON response from OpenAI");
             }
+
             console.log("Parsed JSON Data:", jsonData);
-            // console.log("\n\n\n\n\n\nParsed JSON data: ", jsonData);
 
             if (!jsonData) {
                 throw new Error("Parsed JSON data is empty or invalid");
@@ -84,7 +78,6 @@ class ItineraryService {
             payload.itinerary = jsonData;
             let newTravelPlan = await this.saveItinerary(payload);
 
-            // return { message: "Success", data: content };
             return { message: "Success", data: jsonData, travelPlan: newTravelPlan };
 
         } catch (error) {
