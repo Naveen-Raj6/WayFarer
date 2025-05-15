@@ -18,7 +18,11 @@ import useAuth from "../context/AuthContext";
 import { Modal } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import axios from "../utils/axios";
+import { useTheme as useMuiTheme } from "@mui/material/styles";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { Fragment } from "react";
+import { useTheme } from "../context/ThemeContext"; // Import your custom theme hook
 
 const settings = ["Profile", "Logout"];
 
@@ -26,17 +30,19 @@ const UploadButton = styled(Button)({
   marginTop: "1rem",
 });
 
-const modalStyle = {
+const modalStyle = (theme) => ({
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: 400,
-  bgcolor: "background.paper",
+  bgcolor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
   boxShadow: 24,
   p: 4,
   borderRadius: 2,
-};
+  border: `1px solid ${theme.palette.divider}`,
+});
 
 function Navbar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -45,6 +51,8 @@ function Navbar() {
   const [selectedImage, setSelectedImage] = React.useState(null);
   const [selectedFile, setSelectedFile] = React.useState(null);
   const { token, user, setUser, logout } = useAuth();
+  const muiTheme = useMuiTheme(); // MUI theme
+  const { darkMode, toggleTheme } = useTheme(); // Your custom theme hook
   let navigate = useNavigate();
 
   const handleOpenNavMenu = (event) => {
@@ -70,7 +78,7 @@ function Navbar() {
   const handleLogout = () => {
     logout(); // This will clear token and user from context
     handleCloseUserMenu();
-    navigate("/login");
+    navigate("/");
   };
 
   const handleImageUpload = async (event) => {
@@ -104,8 +112,17 @@ function Navbar() {
   };
 
   return (
-    <Fragment>
-      <AppBar position="static" sx={{ backgroundColor: "transparent" }}>
+    <>
+      <AppBar
+        position="static"
+        elevation={0}
+        sx={{
+          bgcolor: "background.paper",
+          color: "text.primary",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Container maxWidth="xl">
           <Toolbar
             disableGutters
@@ -115,78 +132,99 @@ function Navbar() {
               alignItems: "center",
             }}
           >
-            <img src={logo} alt="logo" style={{ height: "50px" }} />
-            {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
-            <Box
-              sx={{
-                flexGrow: 0,
-                gap: "1em",
-                display: { md: "flex", alignItems: "center" },
-              }}
-            >
-              {token ? (
-                <>
-                  <Tooltip title="Open settings">
-                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <Avatar alt="Remy Sharp" src={user?.displayPicture} />
-                    </IconButton>
-                  </Tooltip>
-                  <Menu
-                    sx={{ mt: "45px" }}
-                    id="menu-appbar"
-                    anchorEl={anchorElUser}
-                    anchorOrigin={{
-                      vertical: "top",
-                      horizontal: "right",
-                    }}
-                    keepMounted
-                    transformOrigin={{
-                      vertical: "top",
-                      horizontal: "right",
-                    }}
-                    open={Boolean(anchorElUser)}
-                    onClose={handleCloseUserMenu}
+            <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+              <img src={logo} alt="logo" style={{ height: "50px" }} />
+            </Link>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton
+                onClick={toggleTheme}
+                sx={{
+                  ml: 1,
+                  color: "text.primary",
+                }}
+              >
+                {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+              </IconButton>
+              <Box
+                sx={{
+                  flexGrow: 0,
+                  gap: "1em",
+                  display: { md: "flex", alignItems: "center" },
+                }}
+              >
+                {token ? (
+                  <>
+                    <Tooltip title="Open settings">
+                      <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                        <Avatar alt="Remy Sharp" src={user?.displayPicture} />
+                      </IconButton>
+                    </Tooltip>
+                    <Menu
+                      sx={{ mt: "45px" }}
+                      id="menu-appbar"
+                      anchorEl={anchorElUser}
+                      anchorOrigin={{
+                        vertical: "top",
+                        horizontal: "right",
+                      }}
+                      keepMounted
+                      transformOrigin={{
+                        vertical: "top",
+                        horizontal: "right",
+                      }}
+                      open={Boolean(anchorElUser)}
+                      onClose={handleCloseUserMenu}
+                    >
+                      {settings.map((setting) => (
+                        <MenuItem
+                          key={setting}
+                          onClick={
+                            setting === "Profile"
+                              ? handleProfileClick
+                              : setting === "Logout"
+                              ? handleLogout
+                              : handleCloseUserMenu
+                          }
+                        >
+                          <Typography sx={{ textAlign: "center" }}>
+                            {setting}
+                          </Typography>
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </>
+                ) : (
+                  <Box
+                    sx={{ display: "flex", gap: "1em", alignItems: "center" }}
                   >
-                    {settings.map((setting) => (
-                      <MenuItem
-                        key={setting}
-                        onClick={
-                          setting === "Profile"
-                            ? handleProfileClick
-                            : setting === "Logout"
-                            ? handleLogout
-                            : handleCloseUserMenu
-                        }
-                      >
-                        <Typography sx={{ textAlign: "center" }}>
-                          {setting}
-                        </Typography>
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    style={{ textDecoration: "none", color: "black" }}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/signup"
-                    style={{
-                      textDecoration: "none",
-                      color: "white",
-                      backgroundColor: "green",
-                      padding: "0.5em 1em",
-                      borderRadius: "8px",
-                    }}
-                  >
-                    Signup
-                  </Link>
-                </>
-              )}
+                    <Link
+                      to="/login"
+                      style={{
+                        textDecoration: "none",
+                        color: muiTheme.palette.primary.main,
+                      }}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/signup"
+                      style={{
+                        textDecoration: "none",
+                        color: muiTheme.palette.primary.contrastText,
+                        backgroundColor: muiTheme.palette.primary.main,
+                        padding: "0.5em 1em",
+                        borderRadius: "8px",
+                        transition: "background-color 0.3s ease",
+                        "&:hover": {
+                          backgroundColor: muiTheme.palette.primary.dark,
+                        },
+                      }}
+                    >
+                      Signup
+                    </Link>
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Toolbar>
         </Container>
@@ -196,7 +234,7 @@ function Navbar() {
         onClose={() => setOpenModal(false)}
         aria-labelledby="profile-modal-title"
       >
-        <Box sx={modalStyle}>
+        <Box sx={modalStyle(muiTheme)}>
           <Typography
             id="profile-modal-title"
             variant="h6"
@@ -242,7 +280,7 @@ function Navbar() {
           </Box>
         </Box>
       </Modal>
-    </Fragment>
+    </>
   );
 }
 export default Navbar;

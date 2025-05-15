@@ -1,16 +1,6 @@
 import itineraryService from "../services/itineraryService.js";
 
 class ItineraryController {
-    async geminiTravelPlan(req, res, next) {
-        try {
-            let travelPlan = await itineraryService.geminiTravelPlan(req);
-            res.status(200).json(travelPlan);
-        } catch (err) {
-            console.log("Error in geminiTravelPlan controller", err);
-            res.status(500).json({ message: "Internal Server Error" });
-        }
-    }
-
 
     async travelPlan(req, res, next) {
         try {
@@ -25,7 +15,7 @@ class ItineraryController {
 
     async getAllItineraries(req, res, next) {
         try {
-            let alltravelPlan = await itineraryService.getAllItinerary();
+            let alltravelPlan = await itineraryService.getAllItinerary(req);
             res.status(200).json(alltravelPlan);
         } catch (err) {
             console.log("Error in getAllItineraries controller", err);
@@ -43,6 +33,8 @@ class ItineraryController {
         }
     }
 
+
+
     async getAutocomplete(req, res, next) {
         console.log("Autocomplete request received", res);
         console.log("Autocomplete request received", req.body);
@@ -53,6 +45,15 @@ class ItineraryController {
             console.error("Error in getAutocomplete controller", err);
             res.status(500).json({ message: "Internal Server Error" });
         }
+    }
+
+    async getItineraryById(req, res, next) {
+        let itinerary = await itineraryService.getItineraryById(req.params.id);
+        if (!itinerary) {
+            res.status(404).json({ message: "No data found" });
+            return;
+        }
+        res.status(200).json(itinerary);
     }
 
 }

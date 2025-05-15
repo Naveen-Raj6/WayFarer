@@ -1,18 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
-import useAuth from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import useAuth from "../context/AuthContext";
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Alert,
+  Paper,
+  CircularProgress,
+} from "@mui/material";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import LoginIcon from "@mui/icons-material/Login";
 
 const Login = () => {
   const { token, setToken, setUser } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (token) {
@@ -20,13 +33,10 @@ const Login = () => {
     }
   }, [token, navigate]);
 
-  const { email, password } = formData;
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Ensure the token is properly stored and navigate to the home page
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -34,15 +44,9 @@ const Login = () => {
 
     try {
       const response = await axios.post("/auth/login", formData);
-      // Store the token and user data in localStorage
-      // localStorage.setItem("userToken", response.data.token);
-      // localStorage.setItem("user", JSON.stringify(response.data.user));
-
       setToken(response.data.token);
       setUser(response.data.user);
-
-      // Navigate to the home page after successful login
-      navigate("/home", { replace: true });
+      navigate("/home");
     } catch (err) {
       setError(
         err.response?.data?.message || "Login failed. Please try again."
@@ -53,51 +57,96 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Navbar />
-      <div className="form-container">
-        <div className="form-wrapper">
-          <h2>Login</h2>
-          {error && <div className="error-message">{error}</div>}
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={email}
-                onChange={handleChange}
-                required
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={password}
-                onChange={handleChange}
-                required
-                placeholder="Enter your password"
-              />
-            </div>
-            <button
+      <Container component="main" maxWidth="xs">
+        <Paper
+          elevation={3}
+          sx={{
+            mt: 8,
+            p: 4,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+            Login
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ width: "100%" }}
+            autoComplete="off"
+          >
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={formData.email}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <EmailIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <LockIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+            <Button
               type="submit"
-              className="btn btn-primary"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
+              startIcon={
+                loading ? <CircularProgress size={20} /> : <LoginIcon />
+              }
             >
               {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
-          <div className="form-footer">
-            Don't have an account? <Link to="/signup">Register</Link>
-          </div>
-        </div>
-      </div>
-    </div>
+            </Button>
+            <Box sx={{ textAlign: "center", mt: 2 }}>
+              <Typography variant="body2">
+                Don't have an account?{" "}
+                <Link
+                  to="/signup"
+                  style={{ color: "primary.main", textDecoration: "none" }}
+                >
+                  Register
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

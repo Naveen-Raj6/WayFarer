@@ -1,94 +1,74 @@
-import openAi from 'openai';
 import itineraryModel from '../models/itenary.model.js';
 import axios from 'axios';
-import { jsonrepair } from 'jsonrepair';
-import gemini1 from 'gemini-ai'
+import { GoogleGenAI } from "@google/genai";
+
 
 class ItineraryService {
-
-    async geminiTravelPlan(req) {
-        const gemini = new gemini1(process.env.geminiAi)
-        const response = await gemini.ask("hello")
-        return response
-    }
-
 
 
     async travelPlan(req) {
         try {
             const { travelType, location, startDate, endDate, budget } = req.body;
 
-            console.log(req.body);
+            const client = new GoogleGenAI({
+                apiKey: process.env.GEMINI_APIKEY,
+            })
 
-            const client = new openAi({
-                apiKey: process.env.chatAi,
-                baseURL: "https://openrouter.ai/api/v1",
-            });
+            const response = await client.models.generateContent({
+                model: "gemini-2.0-flash",
+                contents: `Create a travel itinerary for travel type ${travelType} for the location ${location} from date ${startDate} to date ${endDate}, and budget of $${budget}. Return JSON in the following format:
+{
+  "days": [
+    {
+      "date": "YYYY-MM-DD",
+      "plan": ["activity/place 1", "activity/place 2"],           
+      "cost": 0,
+      "tip": "daily tip about travel, food, or local culture"
+    }
+  ],
+  "total": {
+    "stay": 0,
+    "food": 0,
+    "travel": 0
+  },
+  "tips": [
+    "general tip 1",
+    "general tip 2"
+  ],
+}
+Guidelines:
+- In 'plan', always include at least 2-3 must-visit famous places or activities of the region, and ensure the customer visits at least one must-visit place or activity in 2 to 3 of the plans.
+- In 'food', for each meal (breakfast, lunch, dinner), suggest a hotel/restaurant name (or 'Street Food' if budget is low) and must-try dishes, focusing on famous food, sweets, and beverages of the region for all budgets.
+- In 'guidelines', provide exactly 3 points, only if they are important for that state/city/town/country, about what NOT to do: e.g., General Travel Etiquette, City-Specific Behavior, Environmental Responsibility, Legal & Cultural Sensitivities, Religious and Cultural Site rules, or Local Laws to Highlight. Do not include more than 3 points, and only mention if truly important for the location.`,
+            })
 
-            const response = await client.chat.completions.create({
-                model: "deepseek/deepseek-r1:free",
-                messages: [
-                    {
-                        role: "user",
-                        content: `Create a travel itinerary for travel type ${travelType} for the location ${location} from date (${startDate} to date ${endDate},and budget of  $${budget}). Return JSON:
-                        {
-                          "days": [{
-                            "date": "YYYY-MM-DD",
-                            "plan": ["activity/place 1", "activity/place 2"],
-                            "cost": 0,
-                            "tip": "daily tip"
-                          }],
-                          "total": {
-                            "stay": 0,
-                            "food": 0,
-                            "travel": 0
-                          },
-                          "tips": ["general tip 1", "general tip 2"]
-                        }`,
-                    },
-                ],
-            });
 
-            if (!response || !response.choices || !response.choices.length === 0) {
-                let err = new Error("No response from OpenAI");
+
+
+            if (!response || !response.text) {
+                let err = new Error("No response from Google GenAI");
                 err.statusCode = 500;
                 throw err;
             }
 
-            let content = response.choices[0].message.content;
-            console.log("OpenAI Response Content:", response.choices[0].message.content);
-            // content = content.replace(/```json\s*|```/g, "").trim();
-            // const match = content.match(/{[\s\S]*}/);
-            // if (!match) {
-            //     throw new Error("Unable to parse JSON from the AI response.");
-            // }
+            let content = response.text;
+            content = content
+                .replace(/```json\n/g, "")
+                .replace(/```/g, "")
+                .trim();
 
-            // console.log("\n\n\n\n\n\nContent after replacing: ", content);
-            // const jsonData = content ? JSON.parse(match[0]) : null;/
-
-            let jsonData;
-            try {
-                jsonData = JSON.parse(jsonrepair(content));
-            } catch (error) {
-                console.log("Error parsing JSON:", error);
-                throw new Error("Invalid JSON response from OpenAI");
-            }
-            console.log("Parsed JSON Data:", jsonData);
-            // console.log("\n\n\n\n\n\nParsed JSON data: ", jsonData);
-
-            if (!jsonData) {
-                throw new Error("Parsed JSON data is empty or invalid");
-            }
+            const jsonData = content ? JSON.parse(content) : null;
 
             let payload = req.body;
             payload.itinerary = jsonData;
-            let newTravelPlan = await this.saveItinerary(payload);
+            if (req.userId) {
+                payload.userId = req.userId;
+            }
+            await this.saveItinerary(payload);
 
-            // return { message: "Success", data: content };
-            return { message: "Success", data: jsonData, travelPlan: newTravelPlan };
+            return { message: "Success", data: jsonData };
 
         } catch (error) {
-            console.error("Error in travelPlan method:", error);
             throw error;
         }
 
@@ -106,9 +86,10 @@ class ItineraryService {
         }
     }
 
-    async getAllItinerary() {
-        let alltravelPlan = await itineraryModel.find();
-        // console.log("Fetched Itineraries from Database:", alltravelPlan);
+    async getAllItinerary(req) {
+        let alltravelPlan = await itineraryModel.find({ userId: req.userId })
+        // .populate("userId", "name email displayPicture");
+        // console.log(alltravelPlan);
         if (alltravelPlan) {
             return alltravelPlan;
         } else {
@@ -141,6 +122,17 @@ class ItineraryService {
         } catch (error) {
             console.error("Error fetching places:", error);
             throw error;
+        }
+    }
+
+    async getItineraryById(id) {
+        let travelPlan = await itineraryModel.findById(id);
+        if (travelPlan) {
+            return travelPlan;
+        } else {
+            let err = new Error("Travel Plans not found");
+            err.statusCode = 404;
+            throw err;
         }
     }
 

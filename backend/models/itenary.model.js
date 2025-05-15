@@ -5,6 +5,11 @@ const itinerarySchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
     location: {
         type: String,
         required: true,
@@ -21,7 +26,7 @@ const itinerarySchema = new mongoose.Schema({
         type: Number,
         required: true,
         validate: {
-            validator: function(value) {
+            validator: function (value) {
                 return value > 0;
             },
             message: "Budget must be a positive number"
@@ -31,10 +36,10 @@ const itinerarySchema = new mongoose.Schema({
         type: Object,
         required: true
     }
-},{timestamps: true})
+}, { timestamps: true })
 
 
-itinerarySchema.pre('save', function(next) {
+itinerarySchema.pre('save', function (next) {
     const currentDate = new Date();
     if (this.startDate <= currentDate) {
         const err = new Error('Start date must be in the future');

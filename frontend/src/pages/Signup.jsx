@@ -1,8 +1,22 @@
-import React, { use, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
 import Navbar from "../components/Navbar";
 import useAuth from "../context/AuthContext";
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Alert,
+  Paper,
+  CircularProgress,
+} from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 
 const Signup = () => {
   const { token } = useAuth();
@@ -11,7 +25,6 @@ const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    displayPicture: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,8 +36,7 @@ const Signup = () => {
     }
   }, [token, navigate]);
 
-  const { username, email, password, confirmPassword, displayPicture } =
-    formData;
+  const { username, email, password, confirmPassword } = formData;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,7 +45,6 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     setLoading(true);
 
     try {
@@ -45,15 +56,12 @@ const Signup = () => {
       };
 
       const response = await axios.post("/auth/register", dataToSend);
+      console.log(response.data);
 
       // Store the token in localStorage if provided in response
-      // if (response.data.token) {
-      //   localStorage.setItem("userToken", response.data.token);
-      //   localStorage.setItem("user", JSON.stringify(response.data.user));
-      // }
-
       setToken(response.data.token);
       setUser(response.data.user);
+
       navigate("/home");
     } catch (err) {
       setError(
@@ -65,75 +73,116 @@ const Signup = () => {
   };
 
   return (
-    <div className="signup-container">
+    <Box
+      sx={{ minHeight: "100vh", bgcolor: "background.default" }}
+      autoComplete="off"
+    >
       <Navbar />
-      <div className="form-container">
-        <div className="form-wrapper">
-          <h2>Sign Up</h2>
-          {error && <div className="error-message">{error}</div>}
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={username}
-                onChange={handleChange}
-                required
-                placeholder="Enter your username"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={email}
-                onChange={handleChange}
-                required
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={password}
-                onChange={handleChange}
-                required
-                placeholder="Enter your password"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={confirmPassword}
-                onChange={handleChange}
-                required
-                placeholder="Confirm your password"
-              />
-            </div>
-            <button
+      <Container component="main" maxWidth="xs">
+        <Paper
+          elevation={3}
+          sx={{
+            mt: 8,
+            p: 4,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+            Sign Up
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
+              autoFocus
+              value={formData.username}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <PersonIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email"
+              name="email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <EmailIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="password"
+              label="Password"
+              name="password"
+              autoComplete="new-password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <LockIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="confirmPassword"
+              label="Confirm Password"
+              name="confirmPassword"
+              autoComplete="new-password"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <LockIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+            <Button
               type="submit"
-              className="btn btn-primary"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
+              startIcon={
+                loading ? <CircularProgress size={20} /> : <HowToRegIcon />
+              }
             >
               {loading ? "Signing up..." : "Sign Up"}
-            </button>
-          </form>
-          <div className="form-footer">
-            Already have an account? <Link to="/login">Login</Link>
-          </div>
-        </div>
-      </div>
-    </div>
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

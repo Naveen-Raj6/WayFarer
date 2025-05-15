@@ -7,10 +7,11 @@ import auth from "../middlewares/auth.js";
 let itineraryRouter = express.Router();
 
 itineraryRouter.post("/", auth, validateSchema(itinerarySchema), itinaryController.travelPlan);
-itineraryRouter.post("/gemini",  itinaryController.geminiTravelPlan);
 itineraryRouter.get("/", auth, itinaryController.getAllItineraries);
 
 itineraryRouter.get("/autocomplete", itinaryController.getAutocomplete);
+
+itineraryRouter.get("/:id", auth, itinaryController.getItineraryById);
 
 itineraryRouter.delete("/:id", auth, itinaryController.deleteItinerary);
 
