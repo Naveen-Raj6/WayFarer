@@ -1,19 +1,19 @@
-import express from "express";
-import itinaryController from "../controllers/itinary.controllers.js";
-import validateSchema from "../middlewares/validate.js";
-import itinerarySchema from "../validators/itenary.validator.js";
-import auth from "../middlewares/auth.js";
+import express from 'express';
+import {
+    travelPlan,
+    getAllItinerary,
+    deleteItinerary,
+    getAutocomplete,
+    getItineraryById
+} from '../controllers/itinary.controllers.js';
+import auth from '../middlewares/auth.js';
 
-let itineraryRouter = express.Router();
+const router = express.Router();
 
-itineraryRouter.post("/", auth, validateSchema(itinerarySchema), itinaryController.travelPlan);
-itineraryRouter.get("/", auth, itinaryController.getAllItineraries);
+router.post('/', auth, travelPlan);
+router.get('/', auth, getAllItinerary);
+router.delete('/:id', auth, deleteItinerary);
+router.get('/autocomplete', auth, getAutocomplete);
+router.get('/:id', auth, getItineraryById);
 
-itineraryRouter.get("/autocomplete", itinaryController.getAutocomplete);
-
-itineraryRouter.get("/:id", auth, itinaryController.getItineraryById);
-
-itineraryRouter.delete("/:id", auth, itinaryController.deleteItinerary);
-
-
-export default itineraryRouter;
+export default router;

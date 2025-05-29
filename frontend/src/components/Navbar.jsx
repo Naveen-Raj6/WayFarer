@@ -5,24 +5,28 @@ import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Menu from "@mui/material/Menu";
-import MenuIcon from "@mui/icons-material/Menu";
+
 import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
-import AdbIcon from "@mui/icons-material/Adb";
+
 import logo from "../assets/logo.png";
-import { Link, useNavigate } from "react-router-dom";
+
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../context/AuthContext";
-import { Modal } from "@mui/material";
+import Modal from "@mui/material/Modal";
 import { styled } from "@mui/material/styles";
 import axios from "../utils/axios";
 import { useTheme as useMuiTheme } from "@mui/material/styles";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
-import { Fragment } from "react";
 import { useTheme } from "../context/ThemeContext"; // Import your custom theme hook
+import PaymentIcon from "@mui/icons-material/Payment";
+import CancelIcon from "@mui/icons-material/Cancel";
+import { enqueueSnackbar, closeSnackbar } from "notistack";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const settings = ["Profile", "Logout"];
 
@@ -50,10 +54,12 @@ function Navbar() {
   const [openModal, setOpenModal] = React.useState(false);
   const [selectedImage, setSelectedImage] = React.useState(null);
   const [selectedFile, setSelectedFile] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(false);
   const { token, user, setUser, logout } = useAuth();
   const muiTheme = useMuiTheme(); // MUI theme
   const { darkMode, toggleTheme } = useTheme(); // Your custom theme hook
   let navigate = useNavigate();
+  const location = useLocation();
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -78,7 +84,7 @@ function Navbar() {
   const handleLogout = () => {
     logout(); // This will clear token and user from context
     handleCloseUserMenu();
-    navigate("/");
+    navigate("/login");
   };
 
   const handleImageUpload = async (event) => {
@@ -110,6 +116,107 @@ function Navbar() {
       console.log(error);
     }
   };
+
+  const handleSubscribe = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        "/stripe/create-checkout-session",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Redirect to Stripe Checkout
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.error("Subscription error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    const snackbarKey = enqueueSnackbar(
+      "Are you sure you want to cancel your subscription?",
+      {
+        variant: "warning",
+        persist: true,
+        action: (
+          snackbarKey // Change 'key' to 'snackbarKey' for clarity
+        ) => (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <IconButton
+              size="small"
+              aria-label="confirm cancel"
+              color="inherit"
+              onClick={async () => {
+                try {
+                  setIsLoading(true);
+                  await axios.post(
+                    "/stripe/cancel-subscription",
+                    {},
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
+                  const updatedUser = { ...user, isSubscribed: false };
+                  setUser(updatedUser);
+                  closeSnackbar(snackbarKey); // Close confirmation snackbar first
+                  enqueueSnackbar("Subscription cancelled successfully", {
+                    variant: "success",
+                    autoHideDuration: 3000,
+                  });
+                  navigate("/home");
+                } catch (error) {
+                  closeSnackbar(snackbarKey); // Close confirmation snackbar on error
+                  enqueueSnackbar("Failed to cancel subscription", {
+                    variant: "error",
+                    autoHideDuration: 3000,
+                  });
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+            >
+              <CheckCircleIcon />
+            </IconButton>
+            <IconButton
+              size="small"
+              aria-label="cancel"
+              color="inherit"
+              onClick={() => closeSnackbar(snackbarKey)} // Use snackbarKey directly
+            >
+              <CancelIcon />
+            </IconButton>
+          </Box>
+        ),
+      }
+    );
+  };
+
+  React.useEffect(() => {
+    // Refetch user data on mount and when route changes
+    const fetchUser = async () => {
+      if (token && user?._id) {
+        try {
+          const res = await axios.get(`/users/${user._id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUser(res.data);
+        } catch (err) {
+          // Optionally handle error
+        }
+      }
+    };
+    fetchUser();
+    // eslint-disable-next-line
+  }, [location.pathname]);
 
   return (
     <>
@@ -154,9 +261,34 @@ function Navbar() {
               >
                 {token ? (
                   <>
+                    {/* Add Subscription Button */}
+                    {user?.isSubscribed ? (
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<CancelIcon />}
+                        onClick={handleCancelSubscription}
+                        disabled={isLoading}
+                        sx={{ mr: 2 }}
+                      >
+                        {isLoading ? "Processing..." : "Cancel Premium"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<PaymentIcon />}
+                        onClick={handleSubscribe}
+                        disabled={isLoading}
+                        sx={{ mr: 2 }}
+                      >
+                        {isLoading ? "Processing..." : "Upgrade to Premium"}
+                      </Button>
+                    )}
+
                     <Tooltip title="Open settings">
                       <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                        <Avatar alt="Remy Sharp" src={user?.displayPicture} />
+                        <Avatar alt="User Avatar" src={user?.displayPicture} />
                       </IconButton>
                     </Tooltip>
                     <Menu

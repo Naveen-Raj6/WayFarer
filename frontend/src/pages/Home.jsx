@@ -1,33 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../utils/axios";
+import { Box, Container, Grid, Button } from "@mui/material";
+import { useSnackbar } from "notistack";
 import useAuth from "../context/AuthContext";
-import { useSnackbar } from "../context/SnackbarContext";
-// import useItinerary from "../context/ItenaryContext";
-import {
-  Box,
-  Button,
-  Grid,
-  Paper,
-  TextField,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Container,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import axios from "../utils/axios";
 import Navbar from "../components/Navbar";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css"; // Importing the skeleton styles
-import { useTheme } from "@mui/material/styles";
 import ItineraryForm from "../components/itinerary/ItineraryForm";
 import ItineraryList from "../components/itinerary/ItineraryList";
+import { useTheme } from "@mui/material/styles";
+import UpgradeDialog from "../components/UpgradeDialog";
 
 const capitalizeWords = (str) => {
   return str
@@ -37,21 +18,17 @@ const capitalizeWords = (str) => {
 };
 
 const Home = () => {
-  const { token } = useAuth();
-  const { theme } = useTheme();
-  const { showSnackbar } = useSnackbar();
+  const { token, user, setUser } = useAuth(); // Add user to destructuring
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  let { theme } = useTheme();
 
-  // const { itenaries, setItenaries } = useItinerary();
+  // const { itineraries, setItineraries } = useItinerary();
   const [itineraries, setItineraries] = useState([]);
-  const [pendingDelete, setPendingDelete] = useState(null);
-  const [undoTimeout, setUndoTimeout] = useState(null);
-
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [debouncedInput, setDebouncedInput] = useState("");
-
+  const [debouncedInput, setDebouncedInput] = useState(""); // State for debounced input
   const [formData, setFormData] = useState({
     travelType: "",
     location: "",
@@ -59,15 +36,14 @@ const Home = () => {
     endDate: "",
     budget: "",
   });
-  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false); // State for upgrade dialog
 
   useEffect(() => {
     if (!token) {
-      navigate("/login");
+      navigate("/");
     }
   }, [token, navigate]);
-
-  console.log(itineraries);
 
   // Debounce the input value
   useEffect(() => {
@@ -85,12 +61,11 @@ const Home = () => {
     const fetchSuggestions = async () => {
       if (debouncedInput.length > 1) {
         try {
+          // Use the correct endpoint for autocomplete
           const res = await axios.get("/itenaries/autocomplete", {
             params: { location: debouncedInput },
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log(res);
-
           setSuggestions(res.data);
         } catch (err) {
           console.error("Error fetching suggestions", err);
@@ -103,9 +78,10 @@ const Home = () => {
     fetchSuggestions();
   }, [debouncedInput, token]);
 
+  // Update your fetchItineraries function
   const fetchItineraries = async () => {
     try {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       const response = await axios.get("/itenaries", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -113,7 +89,7 @@ const Home = () => {
     } catch (error) {
       console.error("Error fetching itineraries:", error);
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
@@ -122,7 +98,28 @@ const Home = () => {
     if (token) {
       fetchItineraries();
     }
-  }, [token]);
+  }, []);
+
+  // Update the useEffect for refreshing user data
+  useEffect(() => {
+    if (token && user?._id) {
+      // Check for both token and user ID
+      const refreshUserData = async () => {
+        try {
+          const response = await axios.get(`/users/${user._id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUser(response.data);
+        } catch (error) {
+          console.error("Error refreshing user data:", error);
+          enqueueSnackbar("Failed to refresh user data", {
+            variant: "error",
+          });
+        }
+      };
+      refreshUserData();
+    }
+  }, [token, user?._id]); // Add user._id to dependencies
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -134,12 +131,21 @@ const Home = () => {
     setActiveIndex(-1);
   };
 
+  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Check if user has reached free plan limit using itineraryCount
+      if (!user.isSubscribed && user.itineraryCount >= 2) {
+        setShowUpgradeDialog(true);
+        return;
+      }
+
       await axios.post("/itenaries", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      // Clear form data
       setFormData({
         travelType: "",
         location: "",
@@ -148,11 +154,38 @@ const Home = () => {
         budget: "",
       });
       setQuery("");
+      // Fetch updated user data to get new itineraryCount
       await fetchItineraries();
-      showSnackbar("Itinerary created successfully!", "success");
+      enqueueSnackbar("Itinerary created successfully!", {
+        variant: "success",
+      });
     } catch (error) {
-      showSnackbar("Error creating itinerary!", "error");
-      console.error("Error creating itinerary:", error);
+      console.log(error);
+
+      if (error.response?.status === 403) {
+        enqueueSnackbar(
+          "Free plan limit reached. Please upgrade to continue.",
+          {
+            variant: "warning",
+            action: (key) => (
+              <Button
+                color="primary"
+                size="small"
+                onClick={() => {
+                  closeSnackbar(key);
+                  setShowUpgradeDialog(true);
+                }}
+              >
+                Upgrade Now
+              </Button>
+            ),
+          }
+        );
+      } else {
+        enqueueSnackbar("Error creating itinerary", {
+          variant: "error",
+        });
+      }
     }
   };
 
@@ -175,67 +208,116 @@ const Home = () => {
     }
   };
 
+  // Enhanced handleDelete with undo and localStorage
   const handleDelete = (id) => {
-    // Find the itinerary to delete
-    const deletedItinerary = itineraries.find((item) => item._id === id);
-    // Remove from UI immediately
-    setItineraries((prev) => prev.filter((item) => item._id !== id));
-    setPendingDelete({ id, data: deletedItinerary });
+    const itineraryToDelete = itineraries.find((it) => it._id === id);
+    if (!itineraryToDelete) return;
+
     // Store in localStorage
-    localStorage.setItem("deletedItinerary", JSON.stringify(deletedItinerary));
+    localStorage.setItem("deletedItinerary", JSON.stringify(itineraryToDelete));
+    // Optimistically remove from UI
+    setItineraries((prev) => prev.filter((it) => it._id !== id));
 
-    // Show snackbar with Undo action
-    showSnackbar(
-      "Itinerary deleted. Undo?",
-      "info",
-      <Button
-        color="secondary"
-        size="small"
-        onClick={handleUndo}
-        sx={{ color: "goldenrod" }}
-      >
-        UNDO
-      </Button>
-    );
-
-    // Set timeout to actually delete after 3s
-    const timeout = setTimeout(async () => {
-      // Only delete if not undone
-      const pending = JSON.parse(localStorage.getItem("deletedItinerary"));
-      if (pending && pending._id === id) {
-        try {
-          await axios.delete(`/itenaries/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          showSnackbar("Itinerary deleted from database!", "success");
-        } catch (error) {
-          showSnackbar("Error deleting itinerary!", "error");
-          setItineraries((prev) => [...prev, deletedItinerary]); // Restore if error
-        }
-        // Remove from localStorage after delete
+    let undoTimeout = setTimeout(async () => {
+      try {
+        await axios.delete(`/itenaries/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         localStorage.removeItem("deletedItinerary");
-        setPendingDelete(null);
+        fetchItineraries();
+      } catch (error) {
+        enqueueSnackbar("Error deleting itinerary from server", {
+          variant: "error",
+        });
       }
-      setUndoTimeout(null);
-    }, 3000);
-    setUndoTimeout(timeout);
+    }, 5000); // 5 seconds to undo
+
+    enqueueSnackbar("Are you sure you want to delete this itinerary?", {
+      variant: "warning",
+      action: (key) => (
+        <Button
+          color="primary"
+          size="small"
+          onClick={async () => {
+            clearTimeout(undoTimeout);
+            // Restore in UI
+            setItineraries((prev) => [itineraryToDelete, ...prev]);
+            localStorage.removeItem("deletedItinerary");
+            closeSnackbar(key);
+            enqueueSnackbar("Itinerary restored!", { variant: "success" });
+          }}
+        >
+          Undo
+        </Button>
+      ),
+      autoHideDuration: 5000,
+      onClose: (event, reason, key) => {
+        if (reason === "timeout") {
+          // After timeout, item is deleted from DB in setTimeout above
+        }
+      },
+    });
   };
 
-  const handleUndo = () => {
-    if (undoTimeout) {
-      clearTimeout(undoTimeout);
-      setUndoTimeout(null);
-    }
-    // Get from localStorage
-    const deletedItinerary = JSON.parse(
-      localStorage.getItem("deletedItinerary")
+  if (!user.isSubscribed && user.itineraryCount >= 2) {
+    console.log("checking");
+
+    enqueueSnackbar(
+      "You have reached the limit for creating more itineraries. Use Premium version for unlimited itineraries.",
+      {
+        variant: "warning",
+        persist: false,
+        action: (key) => (
+          <Button
+            color="primary"
+            size="small"
+            onClick={() => {
+              closeSnackbar(key);
+              handleSubscribe();
+            }}
+          >
+            Upgrade Now
+          </Button>
+        ),
+      }
     );
-    if (deletedItinerary) {
-      setItineraries((prev) => [deletedItinerary, ...prev]);
-      setPendingDelete(null);
-      showSnackbar("Itinerary restored!", "success");
-      // Remove from localStorage after restore
-      localStorage.removeItem("deletedItinerary");
+    return;
+  }
+
+  const handleSubscribe = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        "/stripe/create-checkout-session",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Redirect to Stripe Checkout
+      window.location.href = response.data.url;
+    } catch (error) {
+      enqueueSnackbar("Error creating subscription", {
+        variant: "error",
+        action: (key) => (
+          <Button
+            color="primary"
+            size="small"
+            onClick={() => {
+              closeSnackbar(key);
+              setShowUpgradeDialog(true);
+            }}
+          >
+            Retry
+          </Button>
+        ),
+      });
+      console.error("Subscription error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -269,6 +351,7 @@ const Home = () => {
                 onLocationSelect={handleSelect}
                 onKeyDown={handleKeyDown}
                 suggestionStyles={suggestionStyles}
+                user={user} // Pass the user object
               />
             </Grid>
             <Grid item xs={12} md={7}>
@@ -282,6 +365,14 @@ const Home = () => {
           </Grid>
         </Container>
       </Box>
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onClose={() => setShowUpgradeDialog(false)}
+        onUpgrade={() => {
+          setShowUpgradeDialog(false);
+          handleSubscribe();
+        }}
+      />
     </>
   ) : (
     <Box

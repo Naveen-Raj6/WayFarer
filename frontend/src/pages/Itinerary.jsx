@@ -18,8 +18,6 @@ import {
 } from "@mui/material";
 import Navbar from "../components/Navbar";
 import { format } from "date-fns";
-
-import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import DateRangeIcon from "@mui/icons-material/DateRange";
@@ -75,14 +73,7 @@ const Itinerary = () => {
 
   if (error) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <Box sx={{ p: 3, textAlign: "center" }}>
         <Typography color="error">{error}</Typography>
       </Box>
     );
@@ -91,97 +82,138 @@ const Itinerary = () => {
   return (
     <>
       <Navbar />
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-          <IconButton onClick={() => navigate(-1)}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ mb: 2 }}>
+          <IconButton
+            onClick={() => navigate("/home")}
+            sx={{
+              mb: 2,
+              "&:hover": {
+                bgcolor: "action.hover",
+              },
+            }}
+          >
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h4" gutterBottom>
-            {itinerary.location}
+        </Box>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+          {/* Header Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" gutterBottom>
+              Trip to {itinerary?.location}
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <LocationOnIcon sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography variant="body1">{itinerary?.location}</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <FlightTakeoffIcon sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography
+                    variant="body1"
+                    sx={{ textTransform: "capitalize" }}
+                  >
+                    {itinerary?.travelType} Trip
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <DateRangeIcon sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography variant="body1">
+                    {format(new Date(itinerary?.startDate), "MMM dd")} -{" "}
+                    {format(new Date(itinerary?.endDate), "MMM dd, yyyy")}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <AttachMoneyIcon sx={{ mr: 1, color: "primary.main" }} />
+                  <Typography variant="body1">
+                    Budget: ₹{itinerary?.budget.toLocaleString("en-IN")}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Daily Itinerary Section */}
+          <Typography variant="h5" gutterBottom>
+            Daily Schedule
           </Typography>
-          <Divider sx={{ my: 2 }} />
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle1">
-                <FlightTakeoffIcon sx={{ mr: 1 }} /> Travel Type:{" "}
-                {itinerary.travelType}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle1">
-                <DateRangeIcon sx={{ mr: 1 }} /> Dates:{" "}
-                {format(new Date(itinerary.startDate), "MMM dd, yyyy")} -{" "}
-                {format(new Date(itinerary.endDate), "MMM dd, yyyy")}
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1">
-                <CurrencyRupeeIcon sx={{ mr: 1 }} /> Budget: ₹{itinerary.budget}
-              </Typography>
-            </Grid>
-          </Grid>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Daily Plans
-          </Typography>
-          <List>
-            {itinerary.itinerary.days.map((day, index) => (
-              <ListItem key={index}>
-                <ListItemIcon>
-                  <DateRangeIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary={`Date: ${day.date}`}
-                  secondary={`Plan: ${day.plan.join(", ")}`}
-                />
-              </ListItem>
-            ))}
-          </List>
-          <Divider sx={{ my: 2 }} />
-          {/* {itinerary.itinerary.mustTry &&
-            itinerary.itinerary.mustTry.length > 0 && (
-              <>
+          <Box sx={{ mb: 4 }}>
+            {itinerary?.itinerary.days.map((day, index) => (
+              <Paper
+                key={index}
+                elevation={1}
+                sx={{ p: 2, mb: 2, bgcolor: "background.default" }}
+              >
                 <Typography variant="h6" gutterBottom>
-                  Must Try
+                  Day {index + 1}
                 </Typography>
-                <List>
-                  {itinerary.itinerary.mustTry
-                    .slice(0, 3)
-                    .map((item, index) => (
-                      <ListItem key={index}>
-                        <ListItemText primary={item} />
-                      </ListItem>
-                    ))}
+                <List dense>
+                  {day?.plan?.map((activity, actIndex) => (
+                    <ListItem key={actIndex}>
+                      <ListItemText primary={activity} />
+                    </ListItem>
+                  ))}
                 </List>
-                <Divider sx={{ my: 2 }} />
-              </>
-            )} */}
-          <Typography variant="h6" gutterBottom>
-            Tips
+              </Paper>
+            ))}
+          </Box>
+
+          {/* Budget Breakdown */}
+          <Typography variant="h5" gutterBottom>
+            Budget Breakdown
           </Typography>
-          <List>
-            {itinerary.itinerary.tips &&
-              itinerary.itinerary.tips.slice(0, 3).map((tip, index) => (
+          <Paper
+            elevation={1}
+            sx={{ p: 2, mb: 4, bgcolor: "background.default" }}
+          >
+            <Grid container spacing={2}>
+              {Object.entries(itinerary?.itinerary.total).map(
+                ([category, amount]) => (
+                  <Grid item xs={12} sm={6} md={4} key={category}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{ textTransform: "capitalize" }}
+                      >
+                        {category}:
+                      </Typography>
+                      <Typography variant="body1">
+                        ₹{amount.toLocaleString("en-IN")}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )
+              )}
+            </Grid>
+          </Paper>
+
+          {/* Travel Tips */}
+          <Typography variant="h5" gutterBottom>
+            Travel Tips
+          </Typography>
+          <Paper elevation={1} sx={{ p: 2, bgcolor: "background.default" }}>
+            <List>
+              {itinerary?.itinerary.tips.map((tip, index) => (
                 <ListItem key={index}>
                   <ListItemIcon>
-                    <TipsAndUpdatesIcon />
+                    <TipsAndUpdatesIcon color="primary" />
                   </ListItemIcon>
                   <ListItemText primary={tip} />
                 </ListItem>
               ))}
-          </List>
-          {/* <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Guidelines
-          </Typography>
-          <List>
-            {itinerary.itinerary.guidelines &&
-              itinerary.itinerary.guidelines.slice(0, 3).map((guide, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={guide} />
-                </ListItem>
-              ))}
-          </List> */}
+            </List>
+          </Paper>
         </Paper>
       </Container>
     </>

@@ -19,7 +19,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 
 const Signup = () => {
-  const { token } = useAuth();
+  const { token, setToken, setUser } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -64,6 +64,8 @@ const Signup = () => {
 
       navigate("/home");
     } catch (err) {
+      console.log(err);
+
       setError(
         err.response?.data?.message || "Registration failed. Please try again."
       );

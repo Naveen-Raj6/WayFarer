@@ -7,6 +7,7 @@ import Welcome from "./pages/Welcome";
 import { CssBaseline } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Itinerary from "./pages/Itinerary";
+import Success from "./pages/Success";
 
 function App() {
   const theme = useTheme();
@@ -34,6 +35,14 @@ function App() {
               </ProtectedRoute>
             }
           ></Route>
+          <Route
+            path="/success"
+            element={
+              <ProtectedRoute>
+                <Success />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </div>
     </>

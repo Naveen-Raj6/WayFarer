@@ -43,11 +43,16 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log(formData);
+
       const response = await axios.post("/auth/login", formData);
+      console.log(response);
+
       setToken(response.data.token);
       setUser(response.data.user);
       navigate("/home");
     } catch (err) {
+      console.log(err);
       setError(
         err.response?.data?.message || "Login failed. Please try again."
       );
