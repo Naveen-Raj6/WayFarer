@@ -9,6 +9,7 @@ import ItineraryForm from "../components/itinerary/ItineraryForm";
 import ItineraryList from "../components/itinerary/ItineraryList";
 import { useTheme } from "@mui/material/styles";
 import UpgradeDialog from "../components/UpgradeDialog";
+import MostVisited from "../components/itinerary/MostVisited";
 
 const capitalizeWords = (str) => {
   return str
@@ -361,6 +362,9 @@ const Home = () => {
                 onDelete={handleDelete}
                 capitalizeWords={capitalizeWords}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <MostVisited />
             </Grid>
           </Grid>
         </Container>

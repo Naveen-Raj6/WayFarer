@@ -10,7 +10,7 @@ class ItineraryService {
     async travelPlan(req) {
         try {
             const { travelType, location, startDate, endDate, budget } = req.body;
-            
+
             let user = await userModel.findById(req.userId);
 
             if (!user.isSubscribed && user.itenaryCount >= 2) {
@@ -143,6 +143,35 @@ Guidelines:
         } else {
             let err = new Error("Travel Plans not found");
             err.statusCode = 404;
+            throw err;
+        }
+    }
+
+    async getMostVisited(req) {
+        console.log("Fetching most visited itineraries");
+        try {
+            let mostVisited = await itineraryModel.aggregate([
+                {
+                    $group: {
+                        _id: "$location",
+                        count: { $sum: 1 },
+                        doc: { $first: "$$ROOT" }
+                    }
+                },
+                { $sort: { count: -1 } }, // Sort by count descending
+                { $limit: 5 } // Get top 5 most visited
+            ]);
+            if (mostVisited && mostVisited.length > 0) {
+                // Return an array of itinerary documents with visit count
+                return mostVisited.map(item => ({
+                    ...item.doc,
+                    visitCount: item.count
+                }));
+            } else {
+                return [];
+            }
+        } catch (err) {
+            console.log("error in getMostVisited service", err);
             throw err;
         }
     }

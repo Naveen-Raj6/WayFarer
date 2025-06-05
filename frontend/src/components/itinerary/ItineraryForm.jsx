@@ -41,7 +41,7 @@ const ItineraryForm = ({
   itineraries,
 }) => {
   return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+    <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
         <TravelExploreIcon color="primary" />
         <Typography variant="h6">Create Itinerary</Typography>

@@ -21,7 +21,7 @@ const DateRangePicker = ({ startDate, endDate, onChange }) => {
         }}
         InputLabelProps={{
           shrink: true,
-          sx: { ml: 4 },
+          sx: { ml: 0 },
         }}
         sx={{
           "& input": {
@@ -54,7 +54,7 @@ const DateRangePicker = ({ startDate, endDate, onChange }) => {
         }}
         InputLabelProps={{
           shrink: true,
-          sx: { ml: 4 },
+          sx: { ml: 0 },
         }}
         sx={{
           "& input": {

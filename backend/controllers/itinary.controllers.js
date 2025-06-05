@@ -34,8 +34,8 @@ export const deleteItinerary = expressAsyncHandler(async (req, res) => {
 });
 
 export const getAutocomplete = expressAsyncHandler(async (req, res) => {
-    console.log("Autocomplete request received", res);
-    console.log("Autocomplete request received", req.body);
+    // console.log("Autocomplete request received", res);
+    // console.log("Autocomplete request received", req.body);
     try {
         let autocompleteResults = await itineraryService.getAutocomplete(req);
         res.status(200).json(autocompleteResults);
@@ -52,4 +52,20 @@ export const getItineraryById = expressAsyncHandler(async (req, res) => {
         return;
     }
     res.status(200).json(itinerary);
+});
+
+export const getMostVisited = expressAsyncHandler(async (req, res) => {
+    try {
+        console.log("Fetching most visited itineraries in controller");
+        let mostVisited = await itineraryService.getMostVisited(req);
+        if (!mostVisited) {
+            res.status(404).json({ message: "No data found" });
+            return;
+        } else {
+            res.status(200).json(mostVisited);
+        }
+    } catch (err) {
+        console.log("error in getMostVisited controller", err);
+        res.status(500).json({ message: "Internal Server Error ❌" });
+    }
 });
