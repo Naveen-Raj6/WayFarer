@@ -26,12 +26,16 @@ const limiter = rateLimit({
 
 // Apply the rate limiting middleware to all requests.
 // app.use(limiter)
-app.use(cors({
-  origin: "http://localhost:5173", // Allow requests from the frontend
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true, // Allow cookies and credentials
-}))
-// app.use(cors())
+// app.use(cors({
+//   origin: "http://localhost:5173", // Allow requests from the frontend
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+//   credentials: true, // Allow cookies and credentials
+// }))
+app.use(cors(
+  {
+    origin: "https://wayfarer-frontend.vercel.app"
+  }
+))
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/itenaries", itenaryRoutes)
@@ -54,5 +58,7 @@ app.use((err, req, res, next) => {
     stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
   });
 });
+
+// app.use(express.static("public"));
 
 export default app;
