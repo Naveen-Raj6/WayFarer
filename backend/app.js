@@ -31,13 +31,14 @@ const limiter = rateLimit({
 //   methods: ["GET", "POST", "PUT", "DELETE"],
 //   credentials: true, // Allow cookies and credentials
 // }))
-app.use(cors({
-  origin: [
-    "https://wayfarer-frontend.vercel.app",
-    "https://wayfarer-frontend-jeukadcy7-naveenrajs-projects-984d0596.vercel.app"
-  ],
-  credentials: true,
-}));
+  // app.use(cors({
+  //   origin: [
+  //     "https://wayfarer-frontend.vercel.app",
+  //     "https://wayfarer-frontend-jeukadcy7-naveenrajs-projects-984d0596.vercel.app"
+  //   ],
+  //   credentials: true,
+  // }));
+app.use(cors())
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
