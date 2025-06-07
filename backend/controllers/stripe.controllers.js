@@ -26,6 +26,12 @@ export let createCheckoutSession = async (req, res) => {
             customerId = customer.id;
         }
 
+        console.log('Using Stripe Secret:', process.env.STRIPE_SECRET_KEY ? ' Loaded' : 'MISSING');
+        console.log('Using Price ID:', process.env.STRIPE_PRICE_ID || ' MISSING');
+        console.log('Using Client URL:', process.env.CLIENT_URL || ' MISSING');
+        console.log('User email:', user.email);
+
+
         // Create the checkout session for a subscription
         const session = await stripe.checkout.sessions.create({
             customer_email: user.email,
@@ -49,9 +55,10 @@ export let createCheckoutSession = async (req, res) => {
 
         res.json({ url: session.url });
     } catch (err) {
-        console.error('Stripe checkout error:', err);
-        res.status(500).json({ error: 'Something went wrong creating Stripe session.' });
+        console.error('Stripe checkout error:', err); // This is okay
+        res.status(500).json({ error: err.message || 'Something went wrong creating Stripe session.' });
     }
+
 }
 
 
@@ -76,6 +83,7 @@ export let cancelSubscription = async (req, res) => {
         res.json({ success: true, message: 'Subscription canceled successfully' });
     } catch (error) {
         console.error('Error canceling subscription:', error);
+
         res.status(500).json({ error: 'Failed to cancel subscription' });
     }
 }

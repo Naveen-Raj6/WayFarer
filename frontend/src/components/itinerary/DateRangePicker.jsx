@@ -72,6 +72,7 @@ const DateRangePicker = ({ startDate, endDate, onChange }) => {
         }}
       />
     </Stack>
+
   );
 };
 
