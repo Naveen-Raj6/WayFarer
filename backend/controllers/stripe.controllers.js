@@ -43,7 +43,7 @@ export let createCheckoutSession = async (req, res) => {
                     quantity: 1,
                 },
             ],
-            success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${process.env.CLIENT_URL}/success?session_id={{CHECKOUT_SESSION_ID}}`,
             cancel_url: `${process.env.CLIENT_URL}/home`,
             metadata: {
                 userId: user._id.toString(),
